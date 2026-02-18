@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="AquaZen – Anime Water Tracker with AI insights">
+<title>AquaZen ⛩️ Water Tracker</title>
+
+<!-- PWA Manifest inline -->
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22AquaZen%22%2C%22short_name%22%3A%22AquaZen%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a1a%22%2C%22theme_color%22%3A%22%2300d4ff%22%7D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Nunito:wght@400;600;700;800;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   THEME SYSTEM — Ninja / Pirate / Demon Hunter
+   ═══════════════════════════════════════════ */
+:root {
+  /* DEFAULT: NINJA */
+  --bg:        #080810;
+  --bg2:       #0d0d20;
+  --surface:   rgba(255,255,255,0.055);
+  --surface2:  rgba(255,255,255,0.09);
+  --border:    rgba(255,255,255,0.11);
+  --accent:    #00e5ff;
+  --accent2:   #b06cff;
+  --accent3:   #7fff6e;
+  --text:      #e8eaff;
+  --text-dim:  #6a72a0;
+  --water:     #00cfff;
+  --water2:    #006fa8;
+  --success:   #4fffb0;
+  --danger:    #ff4e6a;
+  --warn:      #ffc247;
+  --gold:      #ffd700;
+  --particle1: #00e5ff;
+  --particle2: #b06cff;
+  --hero-emoji: "🥷";
+  --theme-name: "Ninja";
+}
+
+body.theme-pirate {
+  --bg:        #0c0800;
+  --bg2:       #1a0f00;
+  --accent:    #ff9500;
+  --accent2:   #ff3d00;
+  --accent3:   #ffe082;
+  --water:     #1e88e5;
+  --water2:    #0d47a1;
+  --particle1: #ff9500;
+  --particle2: #ff3d00;
+  --hero-emoji: "🏴‍☠️";
+  --theme-name: "Pirate";
+}
+
+body.theme-demon {
+  --bg:        #0d0006;
+  --bg2:       #1a000d;
+  --accent:    #ff1744;
+  --accent2:   #ff6d00;
+  --accent3:   #ff80ab;
+  --water:     #e040fb;
+  --water2:    #6a1b9a;
+  --particle1: #ff1744;
+  --particle2: #ff6d00;
+  --hero-emoji: "👹";
+  --theme-name: "Demon Hunter";
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior:smooth; }
+
+body {
+  font-family:'Nunito',sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition: background .6s ease, color .3s;
+}
+
+/* ─── Canvas BG ─── */
+#bg-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.6; }
+
+/* ─── App Shell ─── */
+.app { position:relative; z-index:1; max-width:920px; margin:0 auto; padding:0 14px 100px; }
+
+/* ─── User Profile Bar ─── */
+.profile-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 18px; background:var(--surface); border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px); position:sticky; top:0; z-index:100;
+  gap:10px; flex-wrap:wrap;
+}
+.profile-left { display:flex; align-items:center; gap:10px; }
+.profile-avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; cursor:pointer; border:2px solid var(--accent);
+  box-shadow:0 0 14px rgba(0,0,0,.4); transition:transform .2s;
+  flex-shrink:0;
+}
+.profile-avatar:hover { transform:scale(1.1); }
+.profile-name { font-weight:800; font-size:.95rem; }
+.profile-streak { font-size:.75rem; color:var(--warn); font-weight:700; }
+.theme-switcher { display:flex; gap:6px; align-items:center; }
+.theme-btn {
+  width:28px; height:28px; border-radius:50%; border:2px solid transparent;
+  cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center;
+  transition:all .2s; background:var(--surface2);
+}
+.theme-btn:hover, .theme-btn.active { border-color:var(--accent); transform:scale(1.15); }
+
+/* ─── Header ─── */
+header { text-align:center; padding:28px 0 16px; }
+.logo {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.8rem,6vw,3rem); font-weight:900;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));
+  background-size:200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  animation:shimmer 4s linear infinite; letter-spacing:3px;
+}
+@keyframes shimmer { to { background-position:200% center; } }
+.logo-sub { font-size:.75rem; color:var(--text-dim); letter-spacing:3px; text-transform:uppercase; margin-top:4px; }
+.theme-badge {
+  display:inline-block; margin-top:8px; padding:3px 14px; border-radius:20px;
+  font-size:.7rem; font-weight:800; letter-spacing:1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000; text-transform:uppercase;
+}
+
+/* ─── Nav ─── */
+.nav {
+  display:flex; gap:6px; overflow-x:auto; padding:4px 0 14px;
+  scrollbar-width:none; justify-content:center; flex-wrap:wrap;
+}
+.nav::-webkit-scrollbar { display:none; }
+.nav-btn {
+  flex-shrink:0; background:var(--surface); border:1px solid var(--border);
+  color:var(--text-dim); padding:8px 16px; border-radius:24px;
+  cursor:pointer; font-family:'Nunito',sans-serif; font-weight:800; font-size:.8rem;
+  transition:all .25s; white-space:nowrap; position:relative; overflow:hidden;
+}
+.nav-btn::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  opacity:0; transition:opacity .3s;
+}
+.nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.nav-btn.active { border-color:transparent; color:#000; font-weight:900; }
+.nav-btn.active::before { opacity:1; }
+.nav-btn span { position:relative; z-index:1; }
+
+/* ─── Pages ─── */
+.page { display:none; animation:fadeUp .45s cubic-bezier(.16,1,.3,1); }
+.page.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── Card ─── */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:22px; margin-bottom:18px;
+  backdrop-filter:blur(10px); position:relative; overflow:hidden;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.4;
+}
+.card-title {
+  font-family:'Orbitron',sans-serif; font-size:.95rem; font-weight:700;
+  color:var(--accent); margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+
+/* ─── Form ─── */
+.form-row { display:flex; gap:12px; flex-wrap:wrap; }
+.form-group { flex:1; min-width:120px; }
+label { font-size:.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase; letter-spacing:.8px; display:block; margin-bottom:6px; }
+input[type=number], input[type=text], select, input[type=password] {
+  width:100%; background:rgba(255,255,255,.06); border:1px solid var(--border);
+  border-radius:12px; color:var(--text); padding:10px 14px;
+  font-family:'Nunito',sans-serif; font-size:.95rem; outline:none; transition:all .2s;
+}
+input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+select option { background:#1a1a3a; color:var(--text); }
+
+/* ─── Buttons ─── */
+.btn {
+  display:inline-flex; align-items:center; gap:7px; justify-content:center;
+  padding:10px 20px; border-radius:14px; border:none; cursor:pointer;
+  font-family:'Nunito',sans-serif; font-weight:800; font-size:.88rem;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.btn-primary {
+  background:linear-gradient(135deg,var(--accent),var(--water2));
+  color:#000; box-shadow:0 4px 20px color-mix(in srgb,var(--accent) 35%,transparent);
+}
+.btn-primary:hover { transform:translateY(-2px); filter:brightness(1.1); }
+.btn-danger { background:rgba(255,78,106,.15); border:1px solid var(--danger); color:var(--danger); }
+.btn-danger:hover { background:rgba(255,78,106,.3); }
+.btn-success { background:linear-gradient(135deg,#00c97a,#007a4d); color:#fff; }
+.btn-gold { background:linear-gradient(135deg,#ffd700,#ff8c00); color:#000; }
+.btn-sm { padding:7px 13px; font-size:.78rem; border-radius:10px; }
+
+/* ─── Water Progress Circle ─── */
+.water-display { text-align:center; margin:16px 0; }
+.water-circle {
+  position:relative; width:175px; height:175px; margin:0 auto 14px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .8s ease;
+}
+.water-circle svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+.circle-bg { fill:none; stroke:rgba(255,255,255,.06); stroke-width:10; }
+.circle-fill {
+  fill:none; stroke-width:10; stroke-linecap:round;
+  stroke:url(#waterGrad);
+  stroke-dasharray:502; stroke-dashoffset:502;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1);
+  filter:drop-shadow(0 0 8px var(--accent));
+}
+.water-inner {
+  width:140px; height:140px; border-radius:50%;
+  background:var(--bg); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:2px;
+}
+.water-pct {
+  font-family:'Orbitron',sans-serif; font-size:1.9rem; font-weight:900; color:var(--accent);
+  line-height:1; transition:all .5s;
+}
+.water-label { font-size:.7rem; color:var(--text-dim); font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+.water-emoji { font-size:1.2rem; }
+
+.water-stats { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+.water-stat { text-align:center; min-width:70px; }
+.water-stat .val { font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:700; color:var(--text); transition:all .4s; }
+.water-stat .lbl { font-size:.68rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; }
+
+/* ─── Progress Bar ─── */
+.prog-bar-wrap { margin:14px 0 8px; }
+.prog-label { display:flex; justify-content:space-between; font-size:.75rem; color:var(--text-dim); margin-bottom:5px; font-weight:700; }
+.prog-bar { height:8px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
+.prog-fill {
+  height:100%; border-radius:4px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width 1.2s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%,transparent);
+}
+
+/* ─── Quick add ─── */
+.quick-add { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 8px; }
+.qa-pill {
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);
+  color:var(--accent); padding:6px 13px; border-radius:20px;
+  cursor:pointer; font-size:.8rem; font-weight:800; transition:all .2s;
+}
+.qa-pill:hover { background:color-mix(in srgb,var(--accent) 25%,transparent); transform:scale(1.05); }
+.qa-pill.selected { background:var(--accent); color:#000; }
+
+/* ─── Log input row ─── */
+.log-input { display:flex; gap:8px; align-items:flex-end; }
+.log-input .form-group { margin-bottom:0; }
+
+/* ─── AI Insight box ─── */
+.ai-box {
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent2) 8%,transparent),color-mix(in srgb,var(--accent) 6%,transparent));
+  border:1px solid color-mix(in srgb,var(--accent2) 25%,transparent);
+  border-radius:14px; padding:14px 16px; margin-top:14px;
+  font-size:.84rem; color:var(--text); line-height:1.6; position:relative;
+}
+.ai-box .ai-label {
+  font-size:.68rem; font-weight:900; text-transform:uppercase; letter-spacing:1px;
+  color:var(--accent2); margin-bottom:6px; display:flex; align-items:center; gap:5px;
+}
+
+/* ─── Reminder ─── */
+.reminder-box {
+  background:color-mix(in srgb,var(--accent2) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent2) 22%,transparent);
+  border-radius:14px; padding:12px 16px; margin-top:12px;
+  font-size:.82rem; color:var(--accent2); display:flex; align-items:center; gap:10px;
+}
+
+/* ─── Achievement banner ─── */
+.achievement {
+  background:linear-gradient(135deg,rgba(255,180,0,.12),rgba(255,80,0,.1));
+  border:1px solid rgba(255,215,0,.3); border-radius:14px;
+  padding:12px; text-align:center; font-weight:900; color:var(--gold);
+  font-size:.95rem; display:none; margin-top:12px;
+  animation:glow 2s ease infinite;
+}
+@keyframes glow {
+  0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.25)}
+  50%{box-shadow:0 0 0 14px rgba(255,215,0,0)}
+}
+
+/* ─── Tip card ─── */
+.tip-card {
+  background:color-mix(in srgb,var(--accent3) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent3) 20%,transparent);
+  border-radius:14px; padding:12px 16px; margin-top:12px;
+  font-size:.83rem; color:var(--accent3); line-height:1.55; display:none;
+}
+
+/* ─── Toast ─── */
+#toast-area { position:fixed; top:68px; right:14px; z-index:9999; display:flex; flex-direction:column; gap:8px; max-width:300px; }
+.toast {
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 90%,#000),color-mix(in srgb,var(--water2) 80%,#000));
+  color:#fff; padding:11px 18px; border-radius:14px; font-weight:700; font-size:.85rem;
+  animation:slideIn .35s ease, fadeOut .4s ease 3.4s forwards;
+  box-shadow:0 4px 28px rgba(0,0,0,.5); border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+}
+@keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes fadeOut { to{opacity:0;transform:translateX(20px)} }
+
+/* ─── Modal ─── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:800; display:flex; align-items:center; justify-content:center; padding:14px; backdrop-filter:blur(4px); }
+.modal-overlay.hidden { display:none; }
+.modal {
+  background:var(--bg2); border:1px solid var(--accent); border-radius:22px;
+  padding:28px; max-width:400px; width:100%; text-align:center;
+  box-shadow:0 0 80px color-mix(in srgb,var(--accent) 20%,transparent);
+  animation:fadeUp .4s ease;
+}
+.modal h3 { font-family:'Orbitron',sans-serif; color:var(--accent); margin-bottom:10px; }
+.modal p { color:var(--text-dim); font-size:.88rem; margin-bottom:18px; }
+.btn-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* ─── User Login Modal ─── */
+#user-modal .modal { max-width:380px; }
+.user-list { margin:14px 0; max-height:200px; overflow-y:auto; }
+.user-item {
+  display:flex; align-items:center; gap:12px; padding:10px 14px;
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:8px; cursor:pointer; transition:all .2s;
+}
+.user-item:hover { border-color:var(--accent); }
+.user-item .u-ava { font-size:1.4rem; }
+.user-item .u-name { font-weight:800; font-size:.9rem; }
+.user-item .u-meta { font-size:.72rem; color:var(--text-dim); }
+.user-item .u-del { margin-left:auto; color:var(--danger); font-size:.75rem; cursor:pointer; padding:2px 6px; border-radius:6px; }
+.user-item .u-del:hover { background:rgba(255,78,106,.15); }
+
+/* ─── History ─── */
+.history-entry {
+  background:var(--surface2); border-radius:14px; padding:13px 16px;
+  margin-bottom:10px; border:1px solid var(--border);
+  transition:border-color .2s;
+}
+.history-entry:hover { border-color:var(--accent); }
+.history-top { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:6px; }
+.history-date { font-weight:900; color:var(--accent); font-size:.88rem; }
+.history-meta { font-size:.75rem; color:var(--text-dim); }
+.history-bar { width:100%; height:6px; background:rgba(255,255,255,.07); border-radius:3px; margin-top:8px; overflow:hidden; }
+.history-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 1s ease; }
+.history-pct { font-size:1.4rem; font-family:'Orbitron',sans-serif; font-weight:900; }
+
+/* ─── Badge Grid ─── */
+.badge-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:16px 12px; text-align:center;
+  transition:all .3s; cursor:default; position:relative; overflow:hidden;
+}
+.badge-card.unlocked { border-color:var(--accent); }
+.badge-card.unlocked::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 8%,transparent),color-mix(in srgb,var(--accent2) 5%,transparent));
+}
+.badge-card .b-emoji { font-size:2.1rem; filter:grayscale(1) opacity(.3); transition:filter .3s; line-height:1; }
+.badge-card.unlocked .b-emoji { filter:none; }
+.badge-card .b-name { font-weight:900; font-size:.8rem; margin:7px 0 3px; }
+.badge-card .b-desc { font-size:.67rem; color:var(--text-dim); line-height:1.4; }
+
+/* ─── Weekly chart ─── */
+.chart-wrap { display:flex; align-items:flex-end; gap:8px; height:130px; padding:10px 0 0; }
+.chart-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.chart-bar { width:100%; border-radius:6px 6px 0 0; min-height:3px; transition:height .8s cubic-bezier(.16,1,.3,1); }
+.chart-pct-lbl { font-size:.62rem; color:var(--text-dim); font-weight:700; }
+.chart-day-lbl { font-size:.62rem; color:var(--text-dim); }
+
+/* ─── Health chips ─── */
+.health-chip {
+  padding:7px 13px; border-radius:20px; font-size:.78rem; font-weight:800;
+  background:var(--surface2); border:1px solid var(--border); color:var(--text-dim);
+  cursor:pointer; transition:all .2s; user-select:none;
+}
+.health-chip.active {
+  background:color-mix(in srgb,var(--accent2) 20%,transparent);
+  border-color:var(--accent2); color:var(--text);
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* ─── Responsive ─── */
+@media(max-width:480px) {
+  .card { padding:16px 14px; }
+  .water-circle { width:155px; height:155px; }
+  .water-inner { width:122px; height:122px; }
+  .water-pct { font-size:1.6rem; }
+  .profile-bar { padding:8px 12px; }
+}
+
+/* ─── Theme transition ─── */
+body { transition:background .5s, color .3s; }
+</style>
+</head>
+<body>
+
+<!-- Animated Canvas Background -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- SVG gradient def (shared) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="var(--accent)"/>
+      <stop offset="100%" stop-color="var(--accent2)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Toast area -->
+<div id="toast-area"></div>
+
+<!-- ─── REMINDER MODAL ─── -->
+<div class="modal-overlay hidden" id="reminder-modal">
+  <div class="modal">
+    <div style="font-size:3rem;margin-bottom:6px" id="remind-hero-emoji">💧</div>
+    <h3>Hydration Alert!</h3>
+    <p id="reminder-msg">30 minutes passed! Log your water intake!</p>
+    <div class="quick-add" style="justify-content:center;margin-bottom:12px">
+      <div class="qa-pill" onclick="setRemindAmt(100)">100ml</div>
+      <div class="qa-pill" onclick="setRemindAmt(150)">150ml</div>
+      <div class="qa-pill" onclick="setRemindAmt(250)">250ml</div>
+      <div class="qa-pill" onclick="setRemindAmt(350)">350ml</div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;text-align:left">
+      <label>Custom amount (ml)</label>
+      <input type="number" id="reminder-amount" value="250" min="0" max="2000">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="logFromReminder()">💧 Log It!</button>
+      <button class="btn btn-danger" onclick="closeReminder()">⏭ Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── USER MODAL ─── -->
+<div class="modal-overlay hidden" id="user-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;margin-bottom:6px">👤</div>
+    <h3>Who's Tracking?</h3>
+    <p>Select your profile or create one</p>
+    <div class="user-list" id="user-list"></div>
+    <div style="margin:10px 0 14px">
+      <div style="font-size:.75rem;color:var(--text-dim);text-align:left;margin-bottom:6px;font-weight:800;text-transform:uppercase;letter-spacing:.5px">New Profile</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="new-user-name" placeholder="Your anime name..." style="flex:1">
+        <select id="new-user-avatar" style="width:68px;text-align:center;font-size:1.1rem">
+          <option>🥷</option><option>🏴‍☠️</option><option>👹</option><option>🦊</option>
+          <option>⚡</option><option>🌊</option><option>🔥</option><option>🌸</option>
+          <option>🐉</option><option>⚔️</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="createUser()">✨ Create & Enter</button>
+      <button class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-dim)" onclick="closeUserModal()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PROFILE BAR ─── -->
+<div class="profile-bar">
+  <div class="profile-left">
+    <div class="profile-avatar" onclick="openUserModal()" id="profile-ava">🥷</div>
+    <div>
+      <div class="profile-name" id="profile-name-display">Guest</div>
+      <div class="profile-streak" id="profile-streak">🔥 0 day streak</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="font-size:.7rem;color:var(--text-dim);font-weight:700">THEME:</div>
+    <div class="theme-switcher">
+      <div class="theme-btn active" id="tb-ninja" onclick="setTheme('ninja')" title="Ninja">🥷</div>
+      <div class="theme-btn" id="tb-pirate" onclick="setTheme('pirate')" title="Pirate">🏴‍☠️</div>
+      <div class="theme-btn" id="tb-demon" onclick="setTheme('demon')" title="Demon Hunter">👹</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="logo">⛩️ AQUA ZEN</div>
+    <div class="logo-sub">Stay hydrated. Stay legendary.</div>
+    <div class="theme-badge" id="theme-badge">🥷 Ninja Mode</div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('bmi',this)"><span>⚡ Smart Calc</span></button>
+    <button class="nav-btn" onclick="showPage('manual',this)"><span>🎯 Set Goal</span></button>
+    <button class="nav-btn" onclick="showPage('health',this)"><span>🏥 Health Mode</span></button>
+    <button class="nav-btn" onclick="showPage('history',this)"><span>📜 History</span></button>
+    <button class="nav-btn" onclick="showPage('badges',this)"><span>🏆 Achievements</span></button>
+    <button class="nav-btn" onclick="showPage('ai',this)"><span>🤖 AI Coach</span></button>
+  </nav>
+
+  <!-- ═══════════ PAGE: SMART CALC ═══════════ -->
+  <div id="page-bmi" class="page active">
+    <div class="card">
+      <div class="card-title">⚡ Smart Water Calculator</div>
+      <div class="form-row">
+        <div class="form-group"><label>Weight (kg)</label><input type="number" id="bmi-weight" placeholder="65" min="20" max="300"></div>
+        <div class="form-group"><label>Height (cm)</label><input type="number" id="bmi-height" placeholder="170" min="100" max="250"></div>
+        <div class="form-group"><label>Age</label><input type="number" id="bmi-age" placeholder="25" min="5" max="120"></div>
+      </div>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label>Activity Level</label>
+          <select id="bmi-activity">
+            <option value="1.0">🪑 Sedentary</option>
+            <option value="1.15">🚶 Light</option>
+            <option value="1.3" selected>🏃 Moderate</option>
+            <option value="1.5">💪 Active</option>
+            <option value="1.7">🏋️ Athlete</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Climate</label>
+          <select id="bmi-climate">
+            <option value="1.0">🌤 Temperate</option>
+            <option value="1.1">☀️ Hot</option>
+            <option value="1.15">🔥 Very Hot</option>
+            <option value="0.95">❄️ Cold</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="calcBMI()">⚡ Calculate & Start</button>
+        <button class="btn btn-danger btn-sm" onclick="resetPage('bmi')">🔄 Reset</button>
+      </div>
+      <div class="tip-card" id="bmi-tip"></div>
+    </div>
+    <div id="bmi-tracker" style="display:none">
+      <div class="card">
+        <div class="card-title">💧 Today's Progress</div>
+        <div class="water-display">
+          <div class="water-circle" id="bmi-circle">
+            <svg viewBox="0 0 170 170"><circle class="circle-bg" cx="85" cy="85" r="80"/><circle class="circle-fill" id="bmi-ring" cx="85" cy="85" r="80"/></svg>
+            <div class="water-inner">
+              <div class="water-emoji" id="bmi-emoji">💧</div>
+              <div class="water-pct" id="bmi-pct">0%</div>
+              <div class="water-label">hydrated</div>
+            </div>
+          </div>
+          <div class="water-stats">
+            <div class="water-stat"><div class="val" id="bmi-consumed">0</div><div class="lbl">consumed ml</div></div>
+            <div class="water-stat"><div class="val" id="bmi-target-disp">0</div><div class="lbl">target ml</div></div>
+            <div class="water-stat"><div class="val" id="bmi-remaining">0</div><div class="lbl">remaining ml</div></div>
+          </div>
+        </div>
+        <div class="prog-bar-wrap">
+          <div class="prog-label"><span>Progress</span><span id="bmi-prog-lbl">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="bmi-prog-fill" style="width:0%"></div></div>
+        </div>
+        <div class="quick-add">
+          <div class="qa-pill" onclick="quickLog('bmi',100)">☕ 100ml</div>
+          <div class="qa-pill" onclick="quickLog('bmi',150)">🥤 150ml</div>
+          <div class="qa-pill" onclick="quickLog('bmi',250)">🧃 250ml</div>
+          <div class="qa-pill" onclick="quickLog('bmi',350)">🍶 350ml</div>
+          <div class="qa-pill" onclick="quickLog('bmi',500)">🫙 500ml</div>
+        </div>
+        <div class="log-input">
+          <div class="form-group"><label>Custom (ml)</label><input type="number" id="bmi-log-amt" placeholder="ml" min="0"></div>
+          <button class="btn btn-success" onclick="logWater('bmi')">+ Log</button>
+        </div>
+        <div class="achievement" id="bmi-achievement">🎉 Daily Goal Smashed! You're legendary!</div>
+        <div class="reminder-box" id="bmi-reminder">
+          <span>⏰</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:.85rem">30-min reminders are ACTIVE</div>
+            <div style="font-size:.75rem;opacity:.8">Next reminder in: <b id="bmi-next">30:00</b></div>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(255,196,71,.15);border:1px solid rgba(255,196,71,.4);color:#ffc247;font-size:.72rem;padding:5px 10px" onclick="triggerReminder('bmi')">Test 🔔</button>
+        </div>
+        <div class="ai-box" id="bmi-ai-box" style="display:none">
+          <div class="ai-label">🤖 AI Insight</div>
+          <div id="bmi-ai-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: MANUAL GOAL ═══════════ -->
+  <div id="page-manual" class="page">
+    <div class="card">
+      <div class="card-title">🎯 Set Your Daily Goal</div>
+      <div class="form-row">
+        <div class="form-group"><label>Daily Goal (ml)</label><input type="number" id="manual-goal" placeholder="2000" min="500" max="8000"></div>
+        <div class="form-group"><label>Your Anime Name</label><input type="text" id="manual-name" placeholder="Naruto, Goku..."></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap">
+        <span style="font-size:.75rem;color:var(--text-dim);font-weight:800;align-self:center">PRESETS:</span>
+        <div class="qa-pill" onclick="setManualGoal(1500)">1.5L</div>
+        <div class="qa-pill" onclick="setManualGoal(2000)">2L</div>
+        <div class="qa-pill" onclick="setManualGoal(2500)">2.5L</div>
+        <div class="qa-pill" onclick="setManualGoal(3000)">3L</div>
+        <div class="qa-pill" onclick="setManualGoal(4000)">4L</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="startManual()">🎯 Start Tracking</button>
+        <button class="btn btn-danger btn-sm" onclick="resetPage('manual')">🔄 Reset</button>
+      </div>
+    </div>
+    <div id="manual-tracker" style="display:none">
+      <div class="card">
+        <div class="card-title">💧 Today's Progress</div>
+        <div class="water-display">
+          <div class="water-circle" id="manual-circle">
+            <svg viewBox="0 0 170 170"><circle class="circle-bg" cx="85" cy="85" r="80"/><circle class="circle-fill" id="manual-ring" cx="85" cy="85" r="80"/></svg>
+            <div class="water-inner">
+              <div class="water-emoji" id="manual-emoji">💧</div>
+              <div class="water-pct" id="manual-pct">0%</div>
+              <div class="water-label">hydrated</div>
+            </div>
+          </div>
+          <div class="water-stats">
+            <div class="water-stat"><div class="val" id="manual-consumed">0</div><div class="lbl">consumed ml</div></div>
+            <div class="water-stat"><div class="val" id="manual-target-disp">0</div><div class="lbl">target ml</div></div>
+            <div class="water-stat"><div class="val" id="manual-remaining">0</div><div class="lbl">remaining ml</div></div>
+          </div>
+        </div>
+        <div class="prog-bar-wrap">
+          <div class="prog-label"><span>Progress</span><span id="manual-prog-lbl">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="manual-prog-fill" style="width:0%"></div></div>
+        </div>
+        <div class="quick-add">
+          <div class="qa-pill" onclick="quickLog('manual',100)">☕ 100ml</div>
+          <div class="qa-pill" onclick="quickLog('manual',150)">🥤 150ml</div>
+          <div class="qa-pill" onclick="quickLog('manual',250)">🧃 250ml</div>
+          <div class="qa-pill" onclick="quickLog('manual',350)">🍶 350ml</div>
+          <div class="qa-pill" onclick="quickLog('manual',500)">🫙 500ml</div>
+        </div>
+        <div class="log-input">
+          <div class="form-group"><label>Custom (ml)</label><input type="number" id="manual-log-amt" placeholder="ml" min="0"></div>
+          <button class="btn btn-success" onclick="logWater('manual')">+ Log</button>
+        </div>
+        <div class="achievement" id="manual-achievement">🎉 Goal Reached! Hydration Master!</div>
+        <div class="reminder-box" id="manual-reminder">
+          <span>⏰</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:.85rem">30-min reminders are ACTIVE</div>
+            <div style="font-size:.75rem;opacity:.8">Next reminder in: <b id="manual-next">30:00</b></div>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(255,196,71,.15);border:1px solid rgba(255,196,71,.4);color:#ffc247;font-size:.72rem;padding:5px 10px" onclick="triggerReminder('manual')">Test 🔔</button>
+        </div>
+        <div class="ai-box" id="manual-ai-box" style="display:none">
+          <div class="ai-label">🤖 AI Insight</div>
+          <div id="manual-ai-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: HEALTH MODE ═══════════ -->
+  <div id="page-health" class="page">
+    <div class="card">
+      <div class="card-title">🏥 Health-Based Calculator</div>
+      <div class="form-row">
+        <div class="form-group"><label>Weight (kg)</label><input type="number" id="h-weight" placeholder="65" min="20" max="300"></div>
+        <div class="form-group"><label>Height (cm)</label><input type="number" id="h-height" placeholder="170" min="100" max="250"></div>
+      </div>
+      <div class="form-group" style="margin-top:14px">
+        <label>Health Conditions (tap to select)</label>
+        <div id="health-chips" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px"></div>
+      </div>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label>Severity</label>
+          <select id="h-severity">
+            <option value="mild">😊 Mild</option>
+            <option value="moderate" selected>😐 Moderate</option>
+            <option value="severe">😰 Severe</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="calcHealth()">🏥 Calculate & Start</button>
+        <button class="btn btn-danger btn-sm" onclick="resetPage('health')">🔄 Reset</button>
+      </div>
+      <div class="tip-card" id="health-tip"></div>
+    </div>
+    <div id="health-tracker" style="display:none">
+      <div class="card">
+        <div class="card-title">💧 Today's Progress</div>
+        <div id="health-badges-row" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div class="water-display">
+          <div class="water-circle" id="health-circle">
+            <svg viewBox="0 0 170 170"><circle class="circle-bg" cx="85" cy="85" r="80"/><circle class="circle-fill" id="health-ring" cx="85" cy="85" r="80"/></svg>
+            <div class="water-inner">
+              <div class="water-emoji" id="health-emoji">💧</div>
+              <div class="water-pct" id="health-pct">0%</div>
+              <div class="water-label">hydrated</div>
+            </div>
+          </div>
+          <div class="water-stats">
+            <div class="water-stat"><div class="val" id="health-consumed">0</div><div class="lbl">consumed ml</div></div>
+            <div class="water-stat"><div class="val" id="health-target-disp">0</div><div class="lbl">target ml</div></div>
+            <div class="water-stat"><div class="val" id="health-remaining">0</div><div class="lbl">remaining ml</div></div>
+          </div>
+        </div>
+        <div class="prog-bar-wrap">
+          <div class="prog-label"><span>Progress</span><span id="health-prog-lbl">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="health-prog-fill" style="width:0%"></div></div>
+        </div>
+        <div class="quick-add">
+          <div class="qa-pill" onclick="quickLog('health',100)">☕ 100ml</div>
+          <div class="qa-pill" onclick="quickLog('health',150)">🥤 150ml</div>
+          <div class="qa-pill" onclick="quickLog('health',250)">🧃 250ml</div>
+          <div class="qa-pill" onclick="quickLog('health',350)">🍶 350ml</div>
+          <div class="qa-pill" onclick="quickLog('health',500)">🫙 500ml</div>
+        </div>
+        <div class="log-input">
+          <div class="form-group"><label>Custom (ml)</label><input type="number" id="health-log-amt" placeholder="ml" min="0"></div>
+          <button class="btn btn-success" onclick="logWater('health')">+ Log</button>
+        </div>
+        <div class="achievement" id="health-achievement">🎉 Goal Crushed! Your body thanks you!</div>
+        <div class="reminder-box" id="health-reminder">
+          <span>⏰</span>
+          <div style="flex:1">
+            <div style="font-weight:800;font-size:.85rem">30-min reminders are ACTIVE</div>
+            <div style="font-size:.75rem;opacity:.8">Next reminder in: <b id="health-next">30:00</b></div>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(255,196,71,.15);border:1px solid rgba(255,196,71,.4);color:#ffc247;font-size:.72rem;padding:5px 10px" onclick="triggerReminder('health')">Test 🔔</button>
+        </div>
+        <div class="ai-box" id="health-ai-box" style="display:none">
+          <div class="ai-label">🤖 AI Insight</div>
+          <div id="health-ai-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: HISTORY ═══════════ -->
+  <div id="page-history" class="page">
+    <div class="card">
+      <div class="card-title">📊 7-Day Overview</div>
+      <div id="week-chart" class="chart-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📜 Full History</div>
+      <!-- Hidden file input for CSV import -->
+      <input type="file" id="import-file-input" accept=".csv,.json" style="display:none" onchange="handleImportFile(event)">
+
+      <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;align-items:center">
+        <select id="hist-filter" onchange="renderHistory()" style="max-width:150px">
+          <option value="all">All Modes</option>
+          <option value="bmi">Smart Calc</option>
+          <option value="manual">Manual Goal</option>
+          <option value="health">Health Mode</option>
+        </select>
+        <button class="btn btn-sm btn-gold" onclick="exportData()">⬇️ Export CSV</button>
+        <button class="btn btn-sm" style="background:rgba(127,255,110,.12);border:1px solid rgba(127,255,110,.35);color:#7fff6e" onclick="document.getElementById('import-file-input').click()">⬆️ Import CSV</button>
+        <button class="btn btn-sm" style="background:rgba(176,108,255,.12);border:1px solid rgba(176,108,255,.35);color:#b06cff" onclick="exportJSON()">💾 Backup JSON</button>
+        <button class="btn btn-sm" style="background:rgba(255,196,71,.1);border:1px solid rgba(255,196,71,.3);color:#ffc247" onclick="document.getElementById('import-file-input').click()">📂 Restore JSON</button>
+        <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ Clear All</button>
+      </div>
+      <div id="import-status" style="display:none;padding:8px 14px;border-radius:10px;font-size:.8rem;font-weight:700;margin-bottom:10px"></div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: ACHIEVEMENTS ═══════════ -->
+  <div id="page-badges" class="page">
+    <div class="card">
+      <div class="card-title">📈 Your Stats</div>
+      <div id="stats-overview"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏆 Achievement Badges</div>
+      <div id="badge-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: AI COACH ═══════════ -->
+  <div id="page-ai" class="page">
+    <div class="card">
+      <div class="card-title">🤖 AI Hydration Coach</div>
+      <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Your personal AI coach analyzes your data and gives customized advice, motivational tips, and health insights!</p>
+      <div id="ai-analysis-cards"></div>
+      <button class="btn btn-primary" onclick="generateAIReport()" style="margin-top:12px">🤖 Generate Full Report</button>
+    </div>
+    <div class="card" id="ai-report-card" style="display:none">
+      <div class="card-title">📋 AI Analysis Report</div>
+      <div id="ai-report-content" style="font-size:.86rem;line-height:1.7;color:var(--text)"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💡 Daily Hydration Tips</div>
+      <div id="ai-daily-tips"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATABASE — localStorage with per-user namespacing
+   ═══════════════════════════════════════════════════ */
+const DB_VERSION = '3';
+const DB_KEY = (uid) => `aquazen_v${DB_VERSION}_${uid}`;
+const USERS_KEY = 'aquazen_users_v3';
+const ACTIVE_USER_KEY = 'aquazen_active_user';
+
+let currentUser = null; // { id, name, avatar, theme }
+let sessions = { bmi:null, manual:null, health:null };
+let timers   = { bmi:null, manual:null, health:null };
+let countdowns = { bmi:1800, manual:1800, health:1800 };
+let activeRemindPage = null;
+let selectedConditions = [];
+
+/* ─── User management ─── */
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch(e) { return []; }
+}
+function saveUsers(users) {
+  try { localStorage.setItem(USERS_KEY, JSON.stringify(users)); } catch(e) {}
+}
+function loadDB() {
+  if (!currentUser) return {};
+  try { return JSON.parse(localStorage.getItem(DB_KEY(currentUser.id))) || {}; } catch(e) { return {}; }
+}
+function saveDB(data) {
+  if (!currentUser) return;
+  try { localStorage.setItem(DB_KEY(currentUser.id), JSON.stringify(data)); } catch(e) {}
+}
+
+function createUser() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const avatar = document.getElementById('new-user-avatar').value;
+  if (!name) { toast('⚠️ Enter your anime name!'); return; }
+  const users = getUsers();
+  if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) {
+    toast('⚠️ That name exists already!'); return;
+  }
+  const user = { id: 'u_' + Date.now(), name, avatar, theme:'ninja', createdAt: Date.now() };
+  users.push(user);
+  saveUsers(users);
+  loginUser(user);
+  closeUserModal();
+  toast(`✨ Welcome, ${name}! Your data is saved locally.`);
+}
+
+function loginUser(user) {
+  currentUser = user;
+  try { localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(user)); } catch(e) {}
+  document.getElementById('profile-name-display').textContent = user.name;
+  document.getElementById('profile-ava').textContent = user.avatar;
+  setTheme(user.theme || 'ninja', true);
+  restoreSessions();
+  updateProfileStreak();
+}
+
+function openUserModal() {
+  const users = getUsers();
+  const list = document.getElementById('user-list');
+  if (!users.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);text-align:center;font-size:.82rem;padding:10px">No profiles yet. Create one below!</div>';
+  } else {
+    list.innerHTML = users.map(u => `
+      <div class="user-item" onclick="selectUser('${u.id}')">
+        <div class="u-ava">${u.avatar}</div>
+        <div>
+          <div class="u-name">${u.name}</div>
+          <div class="u-meta">Since ${new Date(u.createdAt).toLocaleDateString()}</div>
+        </div>
+        <div class="u-del" onclick="event.stopPropagation();deleteUser('${u.id}')">✕</div>
+      </div>`).join('');
+  }
+  document.getElementById('user-modal').classList.remove('hidden');
+}
+
+function selectUser(id) {
+  const user = getUsers().find(u => u.id === id);
+  if (user) { loginUser(user); closeUserModal(); toast(`👋 Welcome back, ${user.name}!`); }
+}
+
+function deleteUser(id) {
+  if (!confirm('Delete this profile and ALL its data?')) return;
+  const users = getUsers().filter(u => u.id !== id);
+  saveUsers(users);
+  try { localStorage.removeItem(DB_KEY(id)); } catch(e) {}
+  if (currentUser && currentUser.id === id) {
+    currentUser = null;
+    document.getElementById('profile-name-display').textContent = 'Guest';
+    document.getElementById('profile-ava').textContent = '🥷';
+  }
+  openUserModal();
+}
+
+function closeUserModal() { document.getElementById('user-modal').classList.add('hidden'); }
+
+/* ─── Theme ─── */
+const THEMES = {
+  ninja:  { class:'', badge:'🥷 Ninja Mode', emoji:'🥷' },
+  pirate: { class:'theme-pirate', badge:'🏴‍☠️ Pirate Mode', emoji:'🏴‍☠️' },
+  demon:  { class:'theme-demon',  badge:'👹 Demon Hunter Mode', emoji:'👹' },
+};
+
+function setTheme(name, silent) {
+  document.body.className = THEMES[name].class;
+  document.getElementById('theme-badge').textContent = THEMES[name].badge;
+  document.getElementById('remind-hero-emoji').textContent = THEMES[name].emoji;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  const tbEl = document.getElementById('tb-'+name);
+  if (tbEl) tbEl.classList.add('active');
+  if (currentUser) {
+    currentUser.theme = name;
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx > -1) { users[idx].theme = name; saveUsers(users); }
+    try { localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(currentUser)); } catch(e) {}
+  }
+  if (!silent) toast(`Theme: ${THEMES[name].badge}`);
+}
+
+/* ─── Canvas Background ─── */
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  function Particle() {
+    this.reset = function() {
+      this.x = Math.random()*W;
+      this.y = H + 20;
+      this.size = Math.random()*5+2;
+      this.speed = Math.random()*.6+.3;
+      this.opacity = Math.random()*.15+.05;
+      this.wobble = Math.random()*Math.PI*2;
+    };
+    this.reset();
+    this.y = Math.random()*H;
+    this.update = function() {
+      this.y -= this.speed;
+      this.wobble += 0.02;
+      this.x += Math.sin(this.wobble)*0.4;
+      if (this.y < -20) this.reset();
+    };
+    this.draw = function(color1, color2) {
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+      ctx.fillStyle = Math.random() > .5 ? color1 : color2;
+      ctx.fill();
+      ctx.restore();
+    };
+  }
+  for (let i=0;i<35;i++) { const p = new Particle(); particles.push(p); }
+
+  function getColor(varName) {
+    return getComputedStyle(document.body).getPropertyValue(varName).trim() || '#00e5ff';
+  }
+
+  function loop() {
+    ctx.clearRect(0,0,W,H);
+    const c1 = getColor('--particle1'), c2 = getColor('--particle2');
+    particles.forEach(p => { p.update(); p.draw(c1, c2); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ─── Navigation ─── */
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id==='history') renderHistory();
+  if (id==='badges') renderBadges();
+  if (id==='ai') renderAIPage();
+}
+
+/* ─── Health Conditions ─── */
+const CONDITIONS = [
+  { name:'Diabetes',       emoji:'🩸', mult:1.15, tip:'Diabetes increases urination. Extra hydration helps regulate blood sugar and prevent ketoacidosis.', restrict:false },
+  { name:'Kidney Disease', emoji:'🫘', mult:0.75, tip:'⚠️ Kidney disease requires medically supervised fluid intake. Always consult your nephrologist.', restrict:true },
+  { name:'Jaundice',       emoji:'🟡', mult:1.20, tip:'Jaundice needs extra fluids to flush toxins through the liver. Warm water aids bile production.', restrict:false },
+  { name:'Diarrhea',       emoji:'🚽', mult:1.50, tip:'Diarrhea causes rapid fluid loss. Use ORS (Oral Rehydration Salts) and increase intake urgently.', restrict:false },
+  { name:'Fever',          emoji:'🌡️', mult:1.30, tip:'For every 1°C above 37°C, drink an extra 150ml. Sweating depletes electrolytes rapidly.', restrict:false },
+  { name:'Cold / Flu',     emoji:'🤧', mult:1.20, tip:'Warm fluids thin mucus, soothe airways and support immune cell function.', restrict:false },
+  { name:'Cough',          emoji:'😮‍💨', mult:1.15, tip:'Warm water and herbal teas soothe irritated airways and help with mucus clearance.', restrict:false },
+  { name:'UTI',            emoji:'🔬', mult:1.40, tip:'High water intake flushes bacteria from the urinary tract and reduces infection duration.', restrict:false },
+  { name:'Hypertension',   emoji:'❤️', mult:1.10, tip:'Proper hydration supports healthy blood pressure. Avoid excess sodium.', restrict:false },
+  { name:'Headaches',      emoji:'🤕', mult:1.20, tip:'Dehydration is a top headache trigger. Drinking 2 glasses at onset can reduce intensity.', restrict:false },
+  { name:'Constipation',   emoji:'😣', mult:1.20, tip:'Adequate water softens stool. Combine with fiber for best results.', restrict:false },
+  { name:'Skin Issues',    emoji:'🧴', mult:1.15, tip:'Skin is 64% water. Proper hydration improves elasticity, reduces acne and dryness.', restrict:false },
+  { name:'Pregnancy',      emoji:'🤰', mult:1.30, tip:'Pregnant individuals need extra fluids for amniotic fluid, blood volume and fetal circulation.', restrict:false },
+  { name:'Post-Surgery',   emoji:'🏥', mult:1.25, tip:'Recovery requires extra hydration for wound healing, anesthesia clearance and tissue repair.', restrict:false },
+  { name:'Arthritis',      emoji:'🦴', mult:1.10, tip:'Cartilage is 60-80% water. Staying hydrated lubricates joints and reduces inflammation.', restrict:false },
+  { name:'Anemia',         emoji:'🩺', mult:1.10, tip:'Iron absorption improves with adequate hydration. Avoid tea/coffee with meals.', restrict:false },
+];
+
+function buildHealthChips() {
+  const container = document.getElementById('health-chips');
+  container.innerHTML = '';
+  CONDITIONS.forEach((c, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'health-chip';
+    chip.innerHTML = `${c.emoji} ${c.name}`;
+    chip.dataset.idx = i;
+    chip.onclick = () => {
+      const pos = selectedConditions.indexOf(i);
+      if (pos>-1) { selectedConditions.splice(pos,1); chip.classList.remove('active'); }
+      else { selectedConditions.push(i); chip.classList.add('active'); }
+    };
+    container.appendChild(chip);
+  });
+}
+buildHealthChips();
+
+/* ─── Calculations ─── */
+function calcBMI() {
+  const w = +document.getElementById('bmi-weight').value;
+  const h = +document.getElementById('bmi-height').value;
+  const a = +document.getElementById('bmi-age').value || 25;
+  const act = +document.getElementById('bmi-activity').value;
+  const cli = +document.getElementById('bmi-climate').value;
+  if (!w||!h) { toast('⚠️ Enter weight and height!'); return; }
+
+  let base = w * 35 * act * cli;
+  if (a < 18) base *= 1.1;
+  if (a > 60) base *= 0.9;
+  const target = Math.round(base/50)*50;
+
+  const bmi = (w/((h/100)**2)).toFixed(1);
+  const bmiCat = bmi<18.5?'Underweight':bmi<25?'Healthy':bmi<30?'Overweight':'Obese';
+  const bmiColors = {Underweight:var_css('--warn'),Healthy:var_css('--success'),Overweight:var_css('--warn'),Obese:var_css('--danger')};
+
+  const tip = document.getElementById('bmi-tip');
+  tip.innerHTML = `BMI: <b>${bmi}</b> (${bmiCat}) · Target: <b>${target}ml/day</b><br><small>Based on weight, age, activity level & climate</small>`;
+  tip.style.display = 'block';
+
+  startSession('bmi', target);
+  document.getElementById('bmi-tracker').style.display = 'block';
+  updateDisplay('bmi');
+  startReminders('bmi');
+  showAIInsight('bmi', { w, h, a, bmi, bmiCat, target, act, cli });
+  toast(`⚡ Target: ${target}ml — Let's GO!`);
+}
+
+function calcHealth() {
+  const w = +document.getElementById('h-weight').value;
+  const h = +document.getElementById('h-height').value;
+  const sev = document.getElementById('h-severity').value;
+  if (!w||!h) { toast('⚠️ Enter weight and height!'); return; }
+
+  let base = w * 35;
+  let maxMult = 1;
+  let tips = [];
+  let condData = [];
+  let restrictive = false;
+
+  selectedConditions.forEach(idx => {
+    const c = CONDITIONS[idx];
+    condData.push(c);
+    tips.push(`${c.emoji} <b>${c.name}</b>: ${c.tip}`);
+    if (c.restrict) { restrictive = true; base = w*25; maxMult = Math.max(maxMult,c.mult); }
+    else maxMult = Math.max(maxMult, c.mult);
+  });
+
+  if (!restrictive) base *= maxMult;
+  const sevMult = {mild:1.0,moderate:1.1,severe:1.2}[sev];
+  if (!restrictive) base *= sevMult;
+
+  let target = Math.round(base/50)*50;
+  target = Math.max(800, Math.min(target, 5000));
+
+  const healthTip = document.getElementById('health-tip');
+  healthTip.innerHTML = tips.join('<br><br>') || '💧 Stay hydrated for general wellness!';
+  healthTip.style.display = 'block';
+
+  const badgesRow = document.getElementById('health-badges-row');
+  badgesRow.innerHTML = (condData.length ? condData : [{emoji:'💧',name:'General'}])
+    .map(c => `<span style="font-size:.75rem;padding:4px 10px;border-radius:10px;background:color-mix(in srgb,var(--accent2) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);color:var(--text)">${c.emoji} ${c.name}</span>`).join('');
+
+  startSession('health', target, condData.map(c=>c.name).join(', '));
+  document.getElementById('health-tracker').style.display = 'block';
+  updateDisplay('health');
+  startReminders('health');
+  showAIInsight('health', { w, h, condData, target, sev });
+  toast(`🏥 Health target: ${target}ml`);
+  if (restrictive) toast('⚠️ Kidney Disease: consult your doctor!');
+  saveAchievement('health_mode');
+}
+
+function startManual() {
+  const g = +document.getElementById('manual-goal').value;
+  if (!g||g<100) { toast('⚠️ Enter a valid goal!'); return; }
+  const name = document.getElementById('manual-name').value || 'Warrior';
+  startSession('manual', g, name);
+  document.getElementById('manual-tracker').style.display = 'block';
+  updateDisplay('manual');
+  startReminders('manual');
+  showAIInsight('manual', { target: g, name });
+  toast(`🎯 Goal: ${g}ml — Go ${name}!`);
+}
+
+function setManualGoal(v) { document.getElementById('manual-goal').value = v; }
+function var_css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ─── Session ─── */
+function todayKey() { return new Date().toISOString().slice(0,10); }
+
+function startSession(page, target, meta) {
+  const today = todayKey();
+  const db = loadDB();
+  if (!db.sessions) db.sessions = {};
+  if (!db.sessions[page]) db.sessions[page] = {};
+  if (!db.sessions[page][today]) {
+    db.sessions[page][today] = { target, consumed:0, meta:meta||'', logs:[], date:today };
+  } else {
+    db.sessions[page][today].target = target;
+    if (meta) db.sessions[page][today].meta = meta;
+  }
+  sessions[page] = db.sessions[page][today];
+  saveDB(db);
+}
+
+function getSession(page) {
+  if (sessions[page]) return sessions[page];
+  const db = loadDB();
+  const today = todayKey();
+  if (db.sessions && db.sessions[page] && db.sessions[page][today]) {
+    sessions[page] = db.sessions[page][today];
+    return sessions[page];
+  }
+  return null;
+}
+
+function saveSession(page) {
+  const today = todayKey();
+  const db = loadDB();
+  if (!db.sessions) db.sessions = {};
+  if (!db.sessions[page]) db.sessions[page] = {};
+  db.sessions[page][today] = sessions[page];
+  saveDB(db);
+}
+
+/* ─── Logging ─── */
+function logWater(page) {
+  const amt = +document.getElementById(page+'-log-amt').value;
+  if (!amt||amt<=0) { toast('⚠️ Enter a valid amount!'); return; }
+  addWater(page, amt);
+  document.getElementById(page+'-log-amt').value = '';
+}
+function quickLog(page, amt) { addWater(page, amt); }
+
+function addWater(page, amt) {
+  let s = getSession(page);
+  if (!s) { toast('⚠️ Set your goal first!'); return; }
+  s.consumed = Math.min(s.consumed + amt, s.target * 1.5);
+  s.logs.push({ time: new Date().toISOString(), amount: amt });
+  saveSession(page);
+  saveAchievement('first_sip');
+  updateDisplay(page);
+  toast(`💧 +${amt}ml logged! 🎉`);
+  if (s.consumed >= s.target) {
+    document.getElementById(page+'-achievement').style.display = 'block';
+    saveAchievement('daily_goal');
+    updateProfileStreak();
+    toast('🏆 GOAL REACHED! Legendary hydration!');
+  }
+  updateAIInsight(page, s);
+}
+
+/* ─── Display ─── */
+function updateDisplay(page) {
+  const s = getSession(page);
+  if (!s) return;
+  const pct = Math.min((s.consumed/s.target)*100, 100);
+  const remaining = Math.max(s.target - s.consumed, 0);
+  const circumference = 2 * Math.PI * 80; // r=80
+
+  // Circle progress
+  const ring = document.getElementById(page+'-ring');
+  if (ring) ring.style.strokeDashoffset = circumference - (pct/100)*circumference;
+
+  // Text
+  document.getElementById(page+'-pct').textContent = pct.toFixed(0)+'%';
+  document.getElementById(page+'-consumed').textContent = s.consumed;
+  document.getElementById(page+'-target-disp').textContent = s.target;
+  document.getElementById(page+'-remaining').textContent = remaining;
+
+  // Progress bar
+  const fill = document.getElementById(page+'-prog-fill');
+  const lbl = document.getElementById(page+'-prog-lbl');
+  if (fill) fill.style.width = pct.toFixed(1)+'%';
+  if (lbl) lbl.textContent = pct.toFixed(0)+'%';
+
+  // Emoji reaction
+  const emojiEl = document.getElementById(page+'-emoji');
+  if (emojiEl) {
+    emojiEl.textContent = pct>=100?'🏆':pct>=75?'💪':pct>=50?'😊':pct>=25?'💧':'😴';
+  }
+}
+
+/* ─── Reminders ─── */
+// Track original title for tab flashing
+const _origTitle = document.title;
+
+function startReminders(page) {
+  if (timers[page]) clearInterval(timers[page]);
+  countdowns[page] = 1800; // 30 minutes
+  timers[page] = setInterval(() => {
+    countdowns[page]--;
+    if (countdowns[page] < 0) countdowns[page] = 1800;
+    const m = Math.floor(countdowns[page] / 60);
+    const s = countdowns[page] % 60;
+    const el = document.getElementById(page + '-next');
+    if (el) el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    // Flash tab title in last 10 seconds before reminder
+    if (countdowns[page] <= 10 && countdowns[page] > 0) {
+      document.title = countdowns[page] % 2 === 0 ? '💧 DRINK WATER!' : _origTitle;
+    } else {
+      document.title = _origTitle;
+    }
+    if (countdowns[page] === 0) {
+      triggerReminder(page);
+    }
+  }, 1000);
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 150, 300].forEach((delay, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 520 + i * 120;
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + delay/1000);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.25);
+      osc.start(ctx.currentTime + delay/1000);
+      osc.stop(ctx.currentTime + delay/1000 + 0.28);
+    });
+  } catch(e) {}
+}
+
+function triggerReminder(page) {
+  const s = getSession(page);
+  if (!s) return;
+  if (s.consumed >= s.target) {
+    // Goal already done — no reminder needed, just reset countdown
+    return;
+  }
+  activeRemindPage = page;
+  const rem = Math.max(s.target - s.consumed, 0);
+  document.getElementById('reminder-msg').textContent =
+    `💧 30-minute check-in! You have ${rem}ml remaining today. How much did you drink?`;
+  document.getElementById('reminder-modal').classList.remove('hidden');
+  document.title = '⏰ Time to Hydrate! — AquaZen';
+  setTimeout(() => { document.title = _origTitle; }, 5000);
+  playBeep();
+  // Browser notification (works when tab is in background)
+  if (Notification.permission === 'granted') {
+    try {
+      new Notification('AquaZen ⏰ Hydration Reminder', {
+        body: `${rem}ml remaining! Time to drink some water 💧`,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💧</text></svg>',
+        tag: 'aquazen-reminder',
+        requireInteraction: true
+      });
+    } catch(e) {}
+  }
+}
+
+function setRemindAmt(v) { document.getElementById('reminder-amount').value = v; }
+function logFromReminder() {
+  const amt = +document.getElementById('reminder-amount').value;
+  if (amt>0 && activeRemindPage) addWater(activeRemindPage, amt);
+  closeReminder();
+}
+function closeReminder() {
+  document.getElementById('reminder-modal').classList.add('hidden');
+  activeRemindPage = null;
+}
+
+if (Notification && Notification.permission==='default') {
+  setTimeout(() => Notification.requestPermission(), 2500);
+}
+
+/* ─── AI Insight Engine ─── */
+const AI_INSIGHTS = {
+  bmi: (data, session) => {
+    const pct = session ? Math.min((session.consumed/session.target)*100,100) : 0;
+    const hour = new Date().getHours();
+    let msg = '';
+    if (pct < 25) msg = `You're just starting! Based on your BMI of ${data.bmi} (${data.bmiCat}), your body needs ${data.target}ml today. Start with a glass right now! 💧`;
+    else if (pct < 50) msg = `Great start! You're 25-50% there. ${data.bmiCat === 'Healthy' ? 'Your healthy BMI means hydration keeps your metabolism optimal!' : 'Staying hydrated supports your health goals!'} Keep going! 🏃`;
+    else if (pct < 75) msg = `Halfway hero! Your activity level (${['Sedentary','Light','Moderate','Active','Athlete'][[1.0,1.15,1.3,1.5,1.7].indexOf(data.act)] || 'Moderate'}) increases your needs. You're doing great! 💪`;
+    else if (pct < 100) msg = `Almost there! Just ${data.target - (session?.consumed||0)}ml left. ${hour > 18 ? 'Evening hydration helps overnight recovery.' : 'Finish strong!'} 🎯`;
+    else msg = `LEGEND! 100% achieved! Your BMI and activity level are well-supported. Tomorrow, try to hit your goal by 8 PM for best results! 🏆`;
+    if (data.cli > 1) msg += ` Hot climate detected — your body loses 20-30% more fluids through sweat!`;
+    return msg;
+  },
+  manual: (data, session) => {
+    const pct = session ? Math.min((session.consumed/session.target)*100,100) : 0;
+    const tips = [
+      `${data.name}, a ${data.target}ml goal is ${data.target >= 2500 ? 'ambitious' : data.target >= 2000 ? 'great' : 'a solid start'}! Set reminders throughout your day.`,
+      `Drinking water first thing in the morning kickstarts metabolism by up to 24%!`,
+      `Sip water 30 min before meals — it can reduce calorie intake by 13%.`,
+      `Signs of dehydration: fatigue, headache, dark urine. You're being proactive! 🌟`,
+    ];
+    return tips[Math.floor(pct/25)] || tips[0];
+  },
+  health: (data, session) => {
+    if (!data.condData || !data.condData.length) return 'Track your health conditions for personalized AI guidance!';
+    const primary = data.condData[0];
+    const sev = data.sev || 'moderate';
+    let msg = `With ${primary.name} at ${sev} severity, your ${data.target}ml target is medically adjusted. `;
+    if (primary.name === 'Diabetes') msg += 'Consistent hydration helps maintain stable blood glucose. Space your intake evenly — every 30 mins is ideal!';
+    else if (primary.name === 'Fever') msg += 'Your body loses ~150ml extra per 1°C above 37°C. If fever exceeds 39°C, seek medical attention.';
+    else if (primary.name === 'Diarrhea') msg += 'Critical! Add ORS (Oral Rehydration Salts) to plain water. Log every 15 min, not just every 30!';
+    else msg += primary.tip;
+    return msg;
+  }
+};
+
+function showAIInsight(page, data) {
+  const s = getSession(page);
+  const box = document.getElementById(page+'-ai-box');
+  const text = document.getElementById(page+'-ai-text');
+  if (!box || !text) return;
+  text.textContent = AI_INSIGHTS[page](data, s);
+  box.style.display = 'block';
+}
+
+function updateAIInsight(page, session) {
+  const text = document.getElementById(page+'-ai-text');
+  if (!text) return;
+  const pct = Math.min((session.consumed/session.target)*100, 100);
+  const msgs = {
+    0:   '💧 Just getting started! Every sip counts!',
+    25:  '⚡ 25% done! You\'re building momentum, keep it up!',
+    50:  '🌟 Halfway! You\'re a hydration warrior!',
+    75:  '🔥 75% complete! The finish line is near!',
+    100: '🏆 COMPLETE! You smashed your goal! Rest and recover tomorrow!',
+  };
+  const milestone = Object.keys(msgs).reverse().find(k => pct >= +k);
+  if (milestone) text.textContent = msgs[milestone];
+}
+
+/* ─── AI Coach Page ─── */
+function renderAIPage() {
+  const db = loadDB();
+  const allSessions = getAllSessions(db);
+  const container = document.getElementById('ai-analysis-cards');
+
+  const totalDays = [...new Set(allSessions.map(s=>s.date))].length;
+  const goalDays = allSessions.filter(s => s.consumed >= s.target).length;
+  const avgPct = allSessions.length ? Math.round(allSessions.reduce((a,s) => a + Math.min(s.consumed/s.target*100,100), 0) / allSessions.length) : 0;
+  const bestDay = allSessions.reduce((best, s) => (s.consumed > (best?.consumed||0) ? s : best), null);
+  const streak = calcStreak(allSessions);
+
+  const cards = [
+    { icon:'📊', label:'Average Daily', value: avgPct+'%', color:'var(--accent)', desc:'completion rate' },
+    { icon:'🏆', label:'Goal Days', value: goalDays, color:'var(--success)', desc:'days goal hit' },
+    { icon:'🔥', label:'Best Streak', value: streak+'d', color:'var(--warn)', desc:'consecutive goals' },
+    { icon:'💧', label:'Best Single Day', value: bestDay ? bestDay.consumed+'ml' : 'N/A', color:'var(--accent2)', desc:'personal record' },
+  ];
+
+  container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px">` +
+    cards.map(c => `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
+      <div style="font-size:1.6rem">${c.icon}</div>
+      <div style="font-family:Orbitron;font-size:1.3rem;font-weight:900;color:${c.color};margin:4px 0">${c.value}</div>
+      <div style="font-size:.7rem;color:var(--text-dim)">${c.label}<br>${c.desc}</div>
+    </div>`).join('') + '</div>';
+
+  // Daily tips
+  const tips = [
+    { t:'🌅 Morning Protocol', d:'Drink 500ml within 30 mins of waking. It rehydrates after 8hrs sleep, kickstarts metabolism and flushes overnight toxins.' },
+    { t:'🍽️ Meal Timing', d:'Drink 250ml 30 min before each meal. It improves digestion, reduces overeating, and enhances nutrient absorption.' },
+    { t:'🏃 Exercise Rule', d:'Drink 500ml before, 250ml every 20 min during, and 750ml per hour after exercise to replace lost electrolytes.' },
+    { t:'📱 Screen Time Trick', d:'Set a reminder for every 2 episodes or 1 hour of screen time. Pair water with your anime watching sessions!' },
+    { t:'🌙 Sleep Prep', d:'Stop large drinks 1-2hrs before bed to avoid disrupting sleep. Sip small amounts if thirsty at night.' },
+    { t:'☀️ Summer Mode', d:'In heat above 30°C, increase daily intake by 500-750ml. Add a pinch of salt to water to replace electrolytes lost in sweat.' },
+  ];
+  document.getElementById('ai-daily-tips').innerHTML = tips.map(t =>
+    `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="font-weight:900;color:var(--accent);font-size:.85rem;margin-bottom:5px">${t.t}</div>
+      <div style="font-size:.82rem;color:var(--text);line-height:1.55">${t.d}</div>
+    </div>`).join('');
+}
+
+function generateAIReport() {
+  const db = loadDB();
+  const allSessions = getAllSessions(db);
+  const card = document.getElementById('ai-report-card');
+  const content = document.getElementById('ai-report-content');
+  card.style.display = 'block';
+  card.scrollIntoView({behavior:'smooth'});
+
+  if (!allSessions.length) {
+    content.innerHTML = '<p style="color:var(--text-dim)">No data yet! Start tracking to generate your report.</p>';
+    return;
+  }
+
+  const totalDays = [...new Set(allSessions.map(s=>s.date))].length;
+  const goalDays = allSessions.filter(s=>s.consumed>=s.target).length;
+  const totalML = allSessions.reduce((a,s)=>a+s.consumed,0);
+  const avgDaily = Math.round(totalML/totalDays);
+  const goalRate = Math.round((goalDays/totalDays)*100);
+  const streak = calcStreak(allSessions);
+  const last7 = allSessions.filter(s => {
+    const d = new Date(s.date), now = new Date();
+    return (now-d) < 7*86400000;
+  });
+  const last7Avg = last7.length ? Math.round(last7.reduce((a,s)=>a+s.consumed,0)/last7.length) : 0;
+  const trend = last7Avg > avgDaily ? '📈 Improving' : last7Avg < avgDaily ? '📉 Declining' : '➡️ Stable';
+
+  const grade = goalRate >= 80 ? 'S' : goalRate >= 60 ? 'A' : goalRate >= 40 ? 'B' : goalRate >= 20 ? 'C' : 'D';
+  const gradeColors = {S:'var(--gold)',A:'var(--success)',B:'var(--accent)',C:'var(--warn)',D:'var(--danger)'};
+
+  content.innerHTML = `
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:3rem">${currentUser?.avatar||'💧'}</div>
+      <div style="font-family:Orbitron;font-size:1.8rem;font-weight:900;color:${gradeColors[grade]};margin:6px 0">Grade: ${grade}</div>
+      <div style="color:var(--text-dim);font-size:.82rem">Hydration Performance Score</div>
+    </div>
+    <div style="margin-bottom:14px;padding:12px;background:var(--surface2);border-radius:12px">
+      <b style="color:var(--accent)">📊 Overview</b><br><br>
+      Total tracking days: <b>${totalDays}</b><br>
+      Goal achieved: <b>${goalDays}/${totalDays} days (${goalRate}%)</b><br>
+      Total water consumed: <b>${(totalML/1000).toFixed(1)}L</b><br>
+      Average daily: <b>${avgDaily}ml</b><br>
+      Best streak: <b>${streak} days</b><br>
+      7-day trend: <b>${trend}</b> (avg ${last7Avg}ml/day)
+    </div>
+    <div style="margin-bottom:14px;padding:12px;background:var(--surface2);border-radius:12px">
+      <b style="color:var(--accent2)">🤖 AI Assessment</b><br><br>
+      ${goalRate >= 80
+        ? `Exceptional performance! You're in the top tier of hydration discipline. Your consistency shows real commitment to health. ${streak >= 7 ? 'Your '+ streak+'-day streak is remarkable!' : 'Keep building that streak!'}`
+        : goalRate >= 60
+        ? `Good effort! You're meeting your goal most days. The key is consistency — try to hit your goal at the same times each day to build a habit.`
+        : goalRate >= 40
+        ? `You're making progress but there's room to improve. Consider setting smaller intermediate goals (25%, 50%, 75%) and celebrate each milestone.`
+        : `You're in the early stages of building this habit. Start with a smaller, achievable daily goal and work up. Even 50% of your target is better than 0%!`}
+    </div>
+    <div style="padding:12px;background:var(--surface2);border-radius:12px">
+      <b style="color:var(--accent3)">💡 Personalized Recommendations</b><br><br>
+      ${avgDaily < 1500 ? '• Increase daily target gradually — add 200ml/week until you reach 2L+' : '• Maintain your current intake levels — you\'re hitting healthy targets'}<br>
+      ${streak < 3 ? '• Focus on 3-day streaks first — they build lasting habits' : streak < 7 ? '• Push for a 7-day streak — that\'s when habits become automatic' : '• Excellent streak! Share your success to motivate others'}<br>
+      ${last7Avg < avgDaily ? '• Your recent intake is declining. Check if stress or schedule changes are affecting you' : '• Your recent trend is positive — momentum is building!'}<br>
+      • Best time to hydrate: 7AM, 10AM, 12PM, 3PM, 6PM, 8PM
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:.72rem;color:var(--text-dim)">Generated by AquaZen AI Coach · ${new Date().toLocaleDateString()}</div>
+  `;
+  toast('🤖 AI Report generated!');
+}
+
+/* ─── History ─── */
+function getAllSessions(db) {
+  const all = [];
+  if (!db.sessions) return all;
+  ['bmi','manual','health'].forEach(page => {
+    if (!db.sessions[page]) return;
+    Object.entries(db.sessions[page]).forEach(([date,s]) => {
+      all.push({ ...s, date, page });
+    });
+  });
+  return all.sort((a,b) => b.date.localeCompare(a.date));
+}
+
+function renderHistory() {
+  const db = loadDB();
+  const filter = document.getElementById('hist-filter')?.value || 'all';
+  let all = getAllSessions(db);
+  if (filter !== 'all') all = all.filter(e => e.page === filter);
+
+  const list = document.getElementById('history-list');
+  if (!all.length) { list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:28px">No history yet! Start tracking 💧</div>'; }
+  else {
+    list.innerHTML = all.map(e => {
+      const pct = Math.min((e.consumed/e.target)*100,100).toFixed(0);
+      const emoji = pct>=100?'🏆':pct>=75?'💪':pct>=50?'😊':pct>=25?'💧':'😴';
+      const pageLabel = {bmi:'⚡ Smart',manual:'🎯 Manual',health:'🏥 Health'}[e.page];
+      const color = pct>=100?'var(--success)':pct>=75?'var(--accent)':pct>=50?'var(--warn)':'var(--danger)';
+      return `<div class="history-entry">
+        <div class="history-top">
+          <div>
+            <div class="history-date">${e.date} ${emoji}</div>
+            <div class="history-meta">${pageLabel} ${e.meta?'· '+e.meta:''}</div>
+            <div class="history-meta">${e.consumed}ml of ${e.target}ml · ${e.logs?.length||0} logs</div>
+            <div class="history-bar"><div class="history-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="history-pct" style="color:${color}">${pct}%</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Weekly chart
+  const weekChart = document.getElementById('week-chart');
+  const all2 = getAllSessions(db);
+  const last7 = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const entries = all2.filter(e=>e.date===key);
+    const consumed = entries.reduce((s,e)=>s+e.consumed,0);
+    const target = entries.reduce((s,e)=>s+e.target,0) || 2000;
+    last7.push({ key, consumed, target });
+  }
+  const maxV = Math.max(...last7.map(d=>Math.max(d.consumed,d.target)), 2000);
+  weekChart.innerHTML = last7.map(d => {
+    const h = Math.round((d.consumed/maxV)*100);
+    const pct = d.target ? Math.min((d.consumed/d.target)*100,100).toFixed(0) : 0;
+    const color = pct>=100?'var(--success)':pct>=75?'var(--accent)':pct>=50?'var(--warn)':'var(--danger)';
+    return `<div class="chart-bar-wrap">
+      <div class="chart-pct-lbl">${pct}%</div>
+      <div class="chart-bar" style="height:${Math.max(h,2)}px;background:${color};box-shadow:0 0 8px ${color}"></div>
+      <div class="chart-day-lbl">${d.key.slice(5)}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Clear ALL history? Cannot undo.')) return;
+  const db = loadDB(); db.sessions = {}; saveDB(db);
+  renderHistory(); toast('🗑️ History cleared!');
+}
+
+/* ─── Export: uses data: URI so it works on file:// AND https:// ─── */
+function exportData() {
+  const db = loadDB();
+  const all = getAllSessions(db);
+  if (!all.length) { toast('⚠️ No data to export yet!'); return; }
+  let csv = 'Date,Mode,Target(ml),Consumed(ml),Percentage,Logs,Notes\n';
+  all.forEach(e => {
+    const pct = Math.min((e.consumed/e.target)*100,100).toFixed(1);
+    // Escape double-quotes inside notes
+    const meta = (e.meta||'').replace(/"/g,'""');
+    csv += `${e.date},${e.page},${e.target},${e.consumed},${pct}%,${e.logs?.length||0},"${meta}"\n`;
+  });
+  // data: URI works on file://, http://, https:// — no blob URL needed
+  const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  const a = document.createElement('a');
+  a.href = dataUri;
+  a.download = `aquazen_${(currentUser?.name||'data').replace(/\s+/g,'_')}_${todayKey()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('✅ CSV exported successfully!');
+}
+
+/* ─── JSON full backup (preserves all logs detail) ─── */
+function exportJSON() {
+  const db = loadDB();
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    user: currentUser?.name || 'Guest',
+    version: DB_VERSION,
+    data: db
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  const a = document.createElement('a');
+  a.href = dataUri;
+  a.download = `aquazen_backup_${(currentUser?.name||'data').replace(/\s+/g,'_')}_${todayKey()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('💾 JSON backup downloaded!');
+}
+
+/* ─── Import: handles both CSV and JSON ─── */
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const content = e.target.result;
+    const status = document.getElementById('import-status');
+    try {
+      if (file.name.endsWith('.json')) {
+        importJSON(content, status);
+      } else {
+        importCSV(content, status);
+      }
+    } catch(err) {
+      status.style.display = 'block';
+      status.style.background = 'rgba(255,78,106,.15)';
+      status.style.color = '#ff4e6a';
+      status.textContent = '❌ Import failed: ' + err.message;
+    }
+    // Reset file input so same file can be re-imported
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function importCSV(content, statusEl) {
+  const lines = content.trim().split('\n');
+  if (lines.length < 2) throw new Error('CSV file is empty or has no data rows.');
+  const header = lines[0].toLowerCase();
+  if (!header.includes('date') || !header.includes('target')) throw new Error('Invalid CSV format. Export from AquaZen first.');
+
+  const db = loadDB();
+  if (!db.sessions) db.sessions = {};
+  let imported = 0, skipped = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    // Parse CSV respecting quoted fields
+    const cols = parseCSVLine(line);
+    if (cols.length < 4) { skipped++; continue; }
+    const [date, mode, targetStr, consumedStr, , , meta] = cols;
+    const target = parseInt(targetStr);
+    const consumed = parseInt(consumedStr);
+    if (!date || !mode || isNaN(target) || isNaN(consumed)) { skipped++; continue; }
+    const validModes = ['bmi','manual','health'];
+    const page = validModes.includes(mode) ? mode : 'manual';
+    if (!db.sessions[page]) db.sessions[page] = {};
+    // Don't overwrite existing data — merge consumed (take max)
+    if (db.sessions[page][date]) {
+      db.sessions[page][date].consumed = Math.max(db.sessions[page][date].consumed, consumed);
+    } else {
+      db.sessions[page][date] = { target, consumed, meta: meta||'', logs: [], date, importedFromCSV: true };
+    }
+    imported++;
+  }
+  saveDB(db);
+  showImportStatus(statusEl, true, `✅ Imported ${imported} records${skipped?', skipped '+skipped+' invalid rows':''}`);
+  renderHistory();
+  toast(`📂 Imported ${imported} records from CSV!`);
+}
+
+function importJSON(content, statusEl) {
+  const backup = JSON.parse(content);
+  if (!backup.data || !backup.data.sessions) throw new Error('Invalid JSON backup file.');
+  const db = loadDB();
+  if (!db.sessions) db.sessions = {};
+  let imported = 0;
+  ['bmi','manual','health'].forEach(page => {
+    if (!backup.data.sessions[page]) return;
+    if (!db.sessions[page]) db.sessions[page] = {};
+    Object.entries(backup.data.sessions[page]).forEach(([date, s]) => {
+      if (!db.sessions[page][date]) { db.sessions[page][date] = s; imported++; }
+      else {
+        // Merge logs — add any logs not already in current data
+        const existing = db.sessions[page][date];
+        existing.consumed = Math.max(existing.consumed, s.consumed);
+        imported++;
+      }
+    });
+  });
+  // Merge achievements
+  if (backup.data.achievements) {
+    if (!db.achievements) db.achievements = [];
+    backup.data.achievements.forEach(a => { if (!db.achievements.includes(a)) db.achievements.push(a); });
+  }
+  saveDB(db);
+  showImportStatus(statusEl, true, `✅ Restored ${imported} sessions from backup (exported: ${backup.exportedAt?.slice(0,10)||'unknown'})`);
+  renderHistory();
+  toast(`💾 JSON backup restored! ${imported} sessions loaded.`);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur.trim()); cur = '';
+    } else cur += ch;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function showImportStatus(el, success, msg) {
+  el.style.display = 'block';
+  el.style.background = success ? 'rgba(79,255,176,.12)' : 'rgba(255,78,106,.12)';
+  el.style.color = success ? '#4fffb0' : '#ff4e6a';
+  el.style.border = `1px solid ${success ? 'rgba(79,255,176,.3)' : 'rgba(255,78,106,.3)'}`;
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+/* ─── Achievements ─── */
+function calcStreak(sessions) {
+  if (!sessions.length) return 0;
+  const goalDates = [...new Set(sessions.filter(s=>s.consumed>=s.target).map(s=>s.date))].sort();
+  if (!goalDates.length) return 0;
+  let streak=1, max=1;
+  for (let i=1;i<goalDates.length;i++) {
+    const diff = (new Date(goalDates[i])-new Date(goalDates[i-1]))/86400000;
+    if (diff===1) { streak++; max=Math.max(max,streak); } else streak=1;
+  }
+  return max;
+}
+
+const BADGES = [
+  { id:'first_sip',    name:'First Sip',        emoji:'🌱', desc:'Log your first water entry' },
+  { id:'daily_goal',   name:'Goal Crusher',      emoji:'🏆', desc:'Reach 100% daily goal' },
+  { id:'streak3',      name:'3-Day Streak',      emoji:'🔥', desc:'Hit goal 3 days in a row' },
+  { id:'streak7',      name:'Week Warrior',      emoji:'⚔️', desc:'Hit goal 7 days in a row' },
+  { id:'streak14',     name:'Fortnight Ninja',   emoji:'🥷', desc:'14-day streak!' },
+  { id:'streak30',     name:'Hydration Legend',  emoji:'👑', desc:'30-day streak!' },
+  { id:'total1L',      name:'Litre Club',        emoji:'💧', desc:'Log 1L in one session' },
+  { id:'total2L',      name:'2L Milestone',      emoji:'🌊', desc:'Log 2L in one session' },
+  { id:'total3L',      name:'Flood Mode',        emoji:'🫙', desc:'Log 3L in one session' },
+  { id:'health_mode',  name:'Health Hero',       emoji:'🏥', desc:'Use Health Mode' },
+  { id:'all_pages',    name:'Explorer',          emoji:'🗺️', desc:'Use all 3 tracking modes' },
+  { id:'early_bird',   name:'Early Bird',        emoji:'🌅', desc:'Log water before 8 AM' },
+  { id:'night_owl',    name:'Night Owl',         emoji:'🦉', desc:'Log water after 11 PM' },
+  { id:'consistent',   name:'Iron Will',         emoji:'🔩', desc:'Log water 10+ days total' },
+  { id:'ninja_theme',  name:'Shadow Clan',       emoji:'🥷', desc:'Use Ninja theme' },
+  { id:'pirate_theme', name:'Sea Dog',           emoji:'🏴‍☠️', desc:'Use Pirate theme' },
+  { id:'demon_theme',  name:'Demon Slayer',      emoji:'👹', desc:'Use Demon Hunter theme' },
+];
+
+function saveAchievement(id) {
+  const db = loadDB();
+  if (!db.achievements) db.achievements = [];
+  if (!db.achievements.includes(id)) {
+    db.achievements.push(id);
+    saveDB(db);
+    const b = BADGES.find(b=>b.id===id);
+    if (b) toast(`🏅 Badge: "${b.name}" unlocked!`);
+  }
+}
+
+function renderBadges() {
+  const db = loadDB();
+  const earned = db.achievements || [];
+  const all = getAllSessions(db);
+  const totalDays = [...new Set(all.map(s=>s.date))].length;
+  const goalDays = all.filter(s=>s.consumed>=s.target).length;
+  const totalML = all.reduce((a,s)=>a+s.consumed,0);
+  const streak = calcStreak(all);
+  const avgPct = all.length ? Math.round(all.reduce((a,s)=>a+Math.min(s.consumed/s.target*100,100),0)/all.length) : 0;
+  const pagesUsed = new Set(all.map(s=>s.page)).size;
+
+  // Auto-award
+  if (all.length > 0) saveAchievement('first_sip');
+  if (goalDays >= 1) saveAchievement('daily_goal');
+  if (streak >= 3) saveAchievement('streak3');
+  if (streak >= 7) saveAchievement('streak7');
+  if (streak >= 14) saveAchievement('streak14');
+  if (streak >= 30) saveAchievement('streak30');
+  if (all.some(s=>s.consumed>=1000)) saveAchievement('total1L');
+  if (all.some(s=>s.consumed>=2000)) saveAchievement('total2L');
+  if (all.some(s=>s.consumed>=3000)) saveAchievement('total3L');
+  if (pagesUsed >= 3) saveAchievement('all_pages');
+  if (totalDays >= 10) saveAchievement('consistent');
+
+  const finalEarned = (loadDB().achievements || []);
+
+  const grid = document.getElementById('badge-grid');
+  grid.innerHTML = BADGES.map(b => {
+    const unlocked = finalEarned.includes(b.id);
+    return `<div class="badge-card ${unlocked?'unlocked':''}">
+      <div class="b-emoji" style="position:relative;z-index:1">${b.emoji}</div>
+      <div class="b-name" style="position:relative;z-index:1;color:${unlocked?'var(--text)':'var(--text-dim)'}">${b.name}</div>
+      <div class="b-desc" style="position:relative;z-index:1">${b.desc}</div>
+      ${unlocked?'<div style="position:absolute;top:6px;right:8px;font-size:.65rem;color:var(--success);font-weight:800;z-index:1">✓ EARNED</div>':''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('stats-overview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      ${[['📅',totalDays,'Total Days'],['🏆',goalDays,'Goal Days'],['🔥',streak+'d','Streak'],
+         ['💧',(totalML/1000).toFixed(1)+'L','Total Logged'],['📊',avgPct+'%','Avg Daily'],['🎖️',finalEarned.length+'/'+BADGES.length,'Badges']].map(([i,v,l]) =>
+        `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:1.2rem">${i}</div>
+          <div style="font-family:Orbitron;font-size:1.1rem;font-weight:900;color:var(--accent)">${v}</div>
+          <div style="font-size:.65rem;color:var(--text-dim)">${l}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function updateProfileStreak() {
+  const db = loadDB();
+  const all = getAllSessions(db);
+  const streak = calcStreak(all);
+  document.getElementById('profile-streak').textContent = `🔥 ${streak} day streak`;
+}
+
+/* ─── Reset ─── */
+function resetPage(page) {
+  if (!confirm('Reset this page\'s current session?')) return;
+  if (timers[page]) clearInterval(timers[page]);
+  sessions[page] = null;
+  const db = loadDB();
+  const today = todayKey();
+  if (db.sessions && db.sessions[page]) delete db.sessions[page][today];
+  saveDB(db);
+  if (page==='bmi') {
+    document.getElementById('bmi-tracker').style.display='none';
+    document.getElementById('bmi-tip').style.display='none';
+    document.getElementById('bmi-achievement').style.display='none';
+    document.getElementById('bmi-ai-box').style.display='none';
+    ['bmi-weight','bmi-height','bmi-age'].forEach(id => document.getElementById(id).value='');
+  }
+  if (page==='manual') {
+    document.getElementById('manual-tracker').style.display='none';
+    document.getElementById('manual-achievement').style.display='none';
+    document.getElementById('manual-ai-box').style.display='none';
+    document.getElementById('manual-goal').value='';
+    document.getElementById('manual-name').value='';
+  }
+  if (page==='health') {
+    document.getElementById('health-tracker').style.display='none';
+    document.getElementById('health-tip').style.display='none';
+    document.getElementById('health-achievement').style.display='none';
+    document.getElementById('health-ai-box').style.display='none';
+    document.getElementById('h-weight').value='';
+    document.getElementById('h-height').value='';
+    selectedConditions=[];
+    document.querySelectorAll('.health-chip').forEach(c=>c.classList.remove('active'));
+  }
+  toast('🔄 Reset done!');
+}
+
+/* ─── Toast ─── */
+function toast(msg) {
+  const area = document.getElementById('toast-area');
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(() => { try{el.remove();}catch(e){} }, 4000);
+}
+
+/* ─── Restore on load ─── */
+function restoreSessions() {
+  const today = todayKey();
+  const db = loadDB();
+  ['bmi','manual','health'].forEach(page => {
+    if (db.sessions && db.sessions[page] && db.sessions[page][today]) {
+      sessions[page] = db.sessions[page][today];
+      updateDisplay(page);
+      const tracker = document.getElementById(page+'-tracker');
+      if (tracker && sessions[page]?.target) {
+        tracker.style.display = 'block';
+        startReminders(page);
+      }
+      if (sessions[page]?.consumed >= sessions[page]?.target) {
+        document.getElementById(page+'-achievement').style.display = 'block';
+      }
+    }
+  });
+  if (sessions.health?.meta) {
+    document.getElementById('health-badges-row').innerHTML =
+      sessions.health.meta.split(',').map(n=>`<span style="font-size:.75rem;padding:4px 10px;border-radius:10px;background:color-mix(in srgb,var(--accent2) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent)">${n.trim()}</span>`).join('');
+  }
+}
+
+/* ─── Init ─── */
+window.addEventListener('DOMContentLoaded', () => {
+  // Restore active user
+  try {
+    const savedUser = JSON.parse(localStorage.getItem(ACTIVE_USER_KEY));
+    if (savedUser) { loginUser(savedUser); toast(`👋 Welcome back, ${savedUser.name}!`); }
+    else { restoreSessions(); openUserModal(); }
+  } catch(e) { restoreSessions(); }
+
+  // Service Worker for PWA offline
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE='aquazen-v3';
+      self.addEventListener('install',e=>{ self.skipWaiting(); });
+      self.addEventListener('fetch',e=>{
+        e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('<h1>Offline</h1>',{headers:{'Content-Type':'text/html'}}))));
+      });
+    `;
+    try {
+      const blob = new Blob([swCode], {type:'application/javascript'});
+      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>
